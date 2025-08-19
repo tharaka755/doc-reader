@@ -75,20 +75,33 @@ class AIChatService
      */
     public function getResponse(string $question): string
     {
+        $startTime = microtime(true);
+        
         try {
             if (!$this->documentService->documentExists()) {
                 return 'Sorry, the document is not available at the moment.';
             }
 
-            // Initialize RAG system if needed
-            $initResult = $this->ragService->initialize();
-            if ($initResult['status'] !== 'success') {
-                Log::error('RAG initialization failed: ' . $initResult['message']);
-                return 'Sorry, there was an error setting up the document analysis. Please try again later.';
+            // Check if RAG system is ready - FAIL FAST if not ready
+            $ragStatus = $this->ragService->getStatus();
+            if (!$ragStatus['embeddings_ready']) {
+                Log::warning('RAG system not ready for real-time queries');
+                return 'Document is still being processed. Please run: php artisan embeddings:generate to prepare the document for questions.';
             }
 
+            Log::info('CHAT_TIMING: RAG system ready, starting query', ['question_length' => strlen($question)]);
+
             // Query the RAG system for relevant content
+            $ragStartTime = microtime(true);
             $ragResult = $this->ragService->query($question, 3, 0.1);
+            $ragTime = microtime(true) - $ragStartTime;
+            
+            Log::info('CHAT_TIMING: RAG query completed', [
+                'duration_ms' => round($ragTime * 1000, 2),
+                'chunks_found' => count($ragResult['chunks'] ?? []),
+                'status' => $ragResult['status']
+            ]);
+            
             if ($ragResult['status'] !== 'success') {
                 return 'Sorry, I could not find relevant information in the document to answer your question.';
             }
@@ -99,6 +112,9 @@ class AIChatService
                            "Relevant content:\n" . $ragResult['context'];
 
             // Call OpenAI Chat Completions API
+            Log::info('CHAT_TIMING: Sending request to OpenAI API');
+            $apiStartTime = microtime(true);
+            
             $response = $this->openai->chat()->create([
                 'model' => 'gpt-4o-mini',
                 'messages' => [
@@ -107,6 +123,15 @@ class AIChatService
                 ],
                 'max_tokens' => 500,
                 'temperature' => 0.7,
+            ]);
+
+            $apiTime = microtime(true) - $apiStartTime;
+            $totalTime = microtime(true) - $startTime;
+
+            Log::info('CHAT_TIMING: Complete chat response generated', [
+                'api_duration_ms' => round($apiTime * 1000, 2),
+                'total_duration_ms' => round($totalTime * 1000, 2),
+                'rag_percentage' => round(($ragTime / $totalTime) * 100, 1)
             ]);
 
             if ($response && isset($response->choices) && !empty($response->choices)) {
@@ -119,7 +144,8 @@ class AIChatService
             return 'Sorry, I could not generate a response at the moment. Please try again.';
 
         } catch (\Exception $e) {
-            Log::error('AI Chat Error: ' . $e->getMessage());
+            $totalTime = microtime(true) - $startTime;
+            Log::error('AI Chat Error: ' . $e->getMessage(), ['duration_ms' => round($totalTime * 1000, 2)]);
             return 'Sorry, there was an error processing your request. Please try again later.';
         }
     }

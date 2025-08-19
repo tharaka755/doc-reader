@@ -24,16 +24,31 @@ class EmbeddingService
      */
     public function generateEmbeddings(array $chunks): array
     {
+        $totalStartTime = microtime(true);
         $embeddings = [];
         
-        foreach ($chunks as $chunk) {
+        Log::info("EMBEDDING_TIMING: Starting embedding generation", [
+            'total_chunks' => count($chunks),
+            'start_time' => $totalStartTime
+        ]);
+        
+        foreach ($chunks as $index => $chunk) {
+            $chunkStartTime = microtime(true);
+            
             try {
-                Log::info("Generating embedding for chunk {$chunk['id']}");
+                Log::info("EMBEDDING_TIMING: Starting chunk embedding", [
+                    'chunk_id' => $chunk['id'],
+                    'chunk_index' => $index + 1,
+                    'total_chunks' => count($chunks),
+                    'chunk_length' => $chunk['length']
+                ]);
                 
+                $apiStartTime = microtime(true);
                 $response = $this->openai->embeddings()->create([
                     'model' => 'text-embedding-3-small', // More cost-effective than ada-002
                     'input' => $chunk['content'],
                 ]);
+                $apiTime = microtime(true) - $apiStartTime;
 
                 $embeddings[] = [
                     'id' => $chunk['id'],
@@ -43,14 +58,44 @@ class EmbeddingService
                     'created_at' => now()->toISOString()
                 ];
 
+                $chunkTime = microtime(true) - $chunkStartTime;
+                Log::info("EMBEDDING_TIMING: Chunk embedding completed", [
+                    'chunk_id' => $chunk['id'],
+                    'api_duration_ms' => round($apiTime * 1000, 2),
+                    'total_chunk_duration_ms' => round($chunkTime * 1000, 2),
+                    'progress' => round(($index + 1) / count($chunks) * 100, 1) . '%'
+                ]);
+
                 // Small delay to avoid rate limits
+                $delayStartTime = microtime(true);
                 usleep(100000); // 0.1 second
+                $delayTime = microtime(true) - $delayStartTime;
+                
+                if ($index % 10 == 0) { // Log every 10th chunk for progress tracking
+                    $elapsedTime = microtime(true) - $totalStartTime;
+                    $estimatedTotal = ($elapsedTime / ($index + 1)) * count($chunks);
+                    $remainingTime = $estimatedTotal - $elapsedTime;
+                    
+                    Log::info("EMBEDDING_TIMING: Progress update", [
+                        'completed' => $index + 1,
+                        'total' => count($chunks),
+                        'elapsed_seconds' => round($elapsedTime, 1),
+                        'estimated_remaining_seconds' => round($remainingTime, 1)
+                    ]);
+                }
 
             } catch (\Exception $e) {
                 Log::error("Error generating embedding for chunk {$chunk['id']}: " . $e->getMessage());
                 throw $e;
             }
         }
+
+        $totalTime = microtime(true) - $totalStartTime;
+        Log::info("EMBEDDING_TIMING: All embeddings completed", [
+            'total_chunks' => count($chunks),
+            'total_duration_seconds' => round($totalTime, 2),
+            'average_per_chunk_ms' => round(($totalTime / count($chunks)) * 1000, 2)
+        ]);
 
         return $embeddings;
     }
