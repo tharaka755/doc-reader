@@ -29,48 +29,6 @@ class AIChatService
     }
 
     /**
-     * Upload document to OpenAI and get file ID
-     */
-    private function uploadDocumentToOpenAI(): ?string
-    {
-        try {
-            if ($this->openaiFileId) {
-                return $this->openaiFileId;
-            }
-
-            if (!$this->documentService->documentExists()) {
-                return null;
-            }
-
-            $fileContent = $this->documentService->getDocumentContent();
-            
-            // Create a temporary file for upload with .txt extension
-            $tempFile = tempnam(sys_get_temp_dir(), 'doc_') . '.txt';
-            file_put_contents($tempFile, $fileContent);
-            
-            // Upload file to OpenAI
-            $response = $this->openai->files()->upload([
-                'purpose' => 'assistants',
-                'file' => fopen($tempFile, 'r'),
-            ]);
-
-            // Clean up temp file
-            unlink($tempFile);
-
-            if ($response && isset($response->id)) {
-                $this->openaiFileId = $response->id;
-                return $this->openaiFileId;
-            }
-
-            return null;
-
-        } catch (\Exception $e) {
-            Log::error('Error uploading document to OpenAI: ' . $e->getMessage());
-            return null;
-        }
-    }
-
-    /**
      * Get AI response using RAG (Retrieval Augmented Generation)
      */
     public function getResponse(string $question): string

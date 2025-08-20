@@ -52,8 +52,27 @@
         <div class="flex items-center justify-center w-full transition-opacity opacity-100 duration-750 lg:grow starting:opacity-0">
             <main class="flex max-w-[335px] w-full flex-col-reverse lg:max-w-4xl lg:flex-row">
                 <div class="text-[13px] leading-[20px] flex-1 p-6 pb-12 lg:p-20 bg-white dark:bg-[#161615] dark:text-[#EDEDEC] shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d] rounded-bl-lg rounded-br-lg lg:rounded-tl-lg lg:rounded-br-none">
-                    <h1 class="mb-1 font-medium">Let's get started</h1>
-                    <p class="mb-2 text-[#706f6c] dark:text-[#A1A09A]">Laravel has an incredibly rich ecosystem. <br>We suggest starting with the following.</p>
+                    <h1 class="mb-1 font-medium">Document Reader - AI Chat Testing</h1>
+                    <p class="mb-2 text-[#706f6c] dark:text-[#A1A09A]">Test three different AI approaches for document processing. <br>Choose your preferred method:</p>
+                    
+                    <!-- Navigation to different chat approaches -->
+                    <div class="flex flex-col space-y-3 mb-6">
+                        <a href="{{ route('chat.index') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            <span class="mr-2">🧠</span>
+                            <span>RAG Chat (Embeddings + Vector Search)</span>
+                        </a>
+                        <a href="{{ route('direct-file-search.index') }}" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                            <span class="mr-2">🔍</span>
+                            <span>Direct File Search (Responses API)</span>
+                        </a>
+                        <a href="{{ route('assistant-chat.index') }}" class="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                            <span class="mr-2">🤖</span>
+                            <span>Assistant Chat (Assistant API)</span>
+                        </a>
+                    </div>
+                    
+                    <h2 class="mb-1 font-medium">Laravel Development</h2>
+                    <p class="mb-2 text-[#706f6c] dark:text-[#A1A09A]">For Laravel development, we suggest starting with the following:</p>
                     <ul class="flex flex-col mb-4 lg:mb-6">
                         <li class="flex items-center gap-4 py-2 relative before:border-l before:border-[#e3e3e0] dark:before:border-[#3E3E3A] before:top-1/2 before:bottom-0 before:left-[0.4rem] before:absolute">
                             <span class="relative py-1 bg-white dark:bg-[#161615]">
@@ -118,7 +137,12 @@
                         </li>
                         <li>
                             <a href="{{ route('chat.index') }}" class="inline-block dark:bg-[#eeeeec] dark:border-[#eeeeec] dark:text-[#1C1C1A] dark:hover:bg-white dark:hover:border-white hover:bg-black hover:border-black px-5 py-1.5 bg-[#1b1b18] rounded-sm border border-black text-white text-sm leading-normal">
-                                AI Document Chat
+                                AI Chat (RAG)
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('assistant-chat.index') }}" class="inline-block dark:bg-[#eeeeec] dark:border-[#eeeeec] dark:text-[#1C1C1A] dark:hover:bg-white dark:hover:border-white hover:bg-black hover:border-black px-5 py-1.5 bg-[#1b1b18] rounded-sm border border-black text-white text-sm leading-normal">
+                                Responses API Chat
                             </a>
                         </li>
                     </ul>

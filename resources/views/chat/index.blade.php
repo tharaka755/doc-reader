@@ -42,6 +42,13 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- Navigation between different approaches -->
+                <div class="flex justify-center space-x-6 py-3 border-t border-gray-200">
+                    <a href="{{ route('chat.index') }}" class="text-blue-600 hover:text-blue-800 underline font-semibold">RAG Chat</a>
+                    <a href="{{ route('direct-file-search.index') }}" class="text-gray-600 hover:text-gray-800 underline">Direct File Search</a>
+                    <a href="{{ route('assistant-chat.index') }}" class="text-gray-600 hover:text-gray-800 underline">Assistant Chat</a>
+                </div>
             </div>
         </header>
 
